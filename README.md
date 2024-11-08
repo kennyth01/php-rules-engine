@@ -1,5 +1,7 @@
 # PHP Rules Engine
 
+[![Run tests](https://github.com/kennyth01/php-rules-engine/actions/workflows/php.yml/badge.svg)](https://github.com/kennyth01/php-rules-engine/actions/workflows/php.yml)
+
 `kennyth01/php-rules-engine` is a lightweight and flexible PHP rules engine that evaluates complex conditional logic using JSON-based rule configurations. It is designed to handle dynamic, reusable, and maintainable rule logic, making it ideal for applications with complex business requirements that must adapt to changing conditions.
 
 This library, inspired by the `json-rules-engine`, ([link](https://github.com/CacheControl/json-rules-engine)) enables developers to define rules with nested conditions, logical operators (`all`, `any`, `not`), and rule dependencies.
