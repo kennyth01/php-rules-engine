@@ -1,0 +1,54 @@
+{
+    "name": "rule.profile.isCompleted",
+    "event": {
+        "type": "rule.profile.isCompleted",
+        "params": {
+            "value": true,
+            "message": "Profile is completed"
+        }
+    },
+    "conditions": {
+        "all": [
+            {
+                "not": {
+                    "fact": "profile",
+                    "path": "$.attributes.username",
+                    "value": null,
+                    "operator": "equal"
+                }
+            },
+            {
+                "not": {
+                    "fact": "profile",
+                    "path": "$.attributes.birthdayYear",
+                    "value": null,
+                    "operator": "equal"
+                }
+            },
+            {
+                "not": {
+                    "fact": "profile",
+                    "path": "$.attributes.profilePic",
+                    "value": null,
+                    "operator": "equal"
+                }
+            },
+            {
+                "not": {
+                    "fact": "profile",
+                    "path": "$.attributes.primaryLocation",
+                    "value": null,
+                    "operator": "equal"
+                }
+            }
+
+        ]
+    },
+    "failureEvent": {
+        "type": "rule.profile.isCompleted",
+        "params": {
+            "value": false,
+            "message": "Profile is not completed"
+        }
+    }
+}
