@@ -10,6 +10,7 @@ class Rule
     private array $event;
     private array $failureEvent;
     private ?string $name;
+    private array $failedConditions = [];
 
     public function __construct(array $options)
     {
@@ -33,6 +34,8 @@ class Rule
 
     public function evaluate(Facts $facts, array $allRules): bool
     {
+        $this->failedConditions = []; // Reset failed conditions before evaluation
+
         if (isset($this->conditions['all'])) {
             return $this->evaluateAll($this->conditions['all'], $facts, $allRules);
         } elseif (isset($this->conditions['any'])) {
@@ -52,6 +55,7 @@ class Rule
                 if (isset($allRules[$dependencyRuleName])) {
                     $dependencyRule = $allRules[$dependencyRuleName];
                     if (!$dependencyRule->evaluate($facts, $allRules)) {
+                        $this->failedConditions[] = $condition;
                         return false;
                     }
                 } else {
@@ -59,18 +63,22 @@ class Rule
                 }
             } elseif (isset($condition['all'])) {
                 if (!$this->evaluateAll($condition['all'], $facts, $allRules)) {
+                    $this->failedConditions[] = $condition;
                     return false;
                 }
             } elseif (isset($condition['any'])) {
                 if (!$this->evaluateAny($condition['any'], $facts, $allRules)) {
+                    $this->failedConditions[] = $condition;
                     return false;
                 }
             } elseif (isset($condition['not'])) {
                 if ($this->evaluateCondition($condition['not'], $facts, $allRules)) {
+                    $this->failedConditions[] = $condition;
                     return false; // Negate the condition
                 }
             } else {
                 if (!$this->evaluateCondition($condition, $facts, $allRules)) {
+                    $this->failedConditions[] = $condition;
                     return false;
                 }
             }
@@ -87,6 +95,8 @@ class Rule
                     $dependencyRule = $allRules[$dependencyRuleName];
                     if ($dependencyRule->evaluate($facts, $allRules)) {
                         return true;
+                    } else {
+                        $this->failedConditions[] = $condition;
                     }
                 } else {
                     throw new Exception("Dependent rule '$dependencyRuleName' not found");
@@ -94,22 +104,35 @@ class Rule
             } elseif (isset($condition['all'])) {
                 if ($this->evaluateAll($condition['all'], $facts, $allRules)) {
                     return true;
+                } else {
+                    $this->failedConditions[] = $condition;
                 }
             } elseif (isset($condition['any'])) {
                 if ($this->evaluateAny($condition['any'], $facts, $allRules)) {
                     return true;
+                } else {
+                    $this->failedConditions[] = $condition;
                 }
             } elseif (isset($condition['not'])) {
                 if (!$this->evaluateCondition($condition['not'], $facts, $allRules)) {
                     return true; // Negate the condition
+                } else {
+                    $this->failedConditions[] = $condition;
                 }
             } else {
                 if ($this->evaluateCondition($condition, $facts, $allRules)) {
                     return true;
+                } else {
+                    $this->failedConditions[] = $condition;
                 }
             }
         }
         return false;
+    }
+
+    public function getFailedConditions(): array
+    {
+        return $this->failedConditions;
     }
 
     private function evaluateCondition(array $condition, Facts $facts, array $allRules): bool
@@ -125,26 +148,17 @@ class Rule
 
         $factData = $facts->get($factName, $path);
 
-        switch ($operator) {
-            case 'equal':
-                return $factData === $value;
-            case 'lessThanInclusive':
-                return $factData <= $value;
-            case 'greaterThanInclusive':
-                return $factData >= $value;
-            case 'lessThan':
-                return $factData < $value;
-            case 'greaterThan':
-                return $factData > $value;
-            case 'in':
-                return in_array($factData, $value, true);
-            case 'notIn':
-                return !in_array($factData, $value, true);
-            case 'contains':
-                return is_array($factData) && in_array($value, $factData);
-            default:
-                throw new Exception("Unknown operator: $operator");
-        }
+        return match ($operator) {
+            'equal'                => $factData === $value,
+            'lessThanInclusive'    => $factData <= $value,
+            'greaterThanInclusive' => $factData >= $value,
+            'lessThan'             => $factData < $value,
+            'greaterThan'          => $factData > $value,
+            'in'                   => in_array($factData, $value, true),
+            'notIn'                => !in_array($factData, $value, true),
+            'contains'             => is_array($factData) && in_array($value, $factData),
+            default                => throw new Exception("Unknown operator: $operator"),
+        };
     }
 
     public function triggerEvent(Facts $facts): array
@@ -205,34 +219,18 @@ class Rule
         }
 
         // Mapping operator to a readable format
-        switch ($operator) {
-            case 'equal':
-                $operatorText = 'is equal to';
-                break;
-            case 'greaterThanInclusive':
-                $operatorText = 'is >=';
-                break;
-            case 'lessThanInclusive':
-                $operatorText = 'is <=';
-                break;
-            case 'lessThan':
-                $operatorText = 'is less than';
-                break;
-            case 'greaterThan':
-                $operatorText = 'is greater than';
-                break;
-            case 'in':
-                $operatorText = 'is in';
-                break;
-            case 'notIn':
-                $operatorText = 'is not in';
-                break;
-            case 'contains':
-                $operatorText = 'contains';
-                break;
-            default:
-                throw new Exception("Unknown operator: $operator");
-        }
+        $operatorText = match ($operator) {
+            'equal'                => 'is equal to',
+            'greaterThanInclusive' => 'is >=',
+            'lessThanInclusive'    => 'is <=',
+            'lessThan'             => 'is less than',
+            'greaterThan'          => 'is greater than',
+            'in'                   => 'is in',
+            'notIn'                => 'is not in',
+            'contains'             => 'contains',
+            default                => throw new Exception("Unknown operator: $operator"),
+        };
+
         return "$factDisplay $operatorText $value";
     }
 }

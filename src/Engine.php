@@ -61,6 +61,7 @@ class Engine
         }
 
         $result = [];
+        $failedConditions = [];
 
         // Evaluate the target rule
         if ($this->targetRule->evaluate($this->facts, $this->allRules)) {
@@ -69,9 +70,14 @@ class Engine
                 ['interpretation' => $this->targetRule->interpretRules()]
             );
         } else {
+            $failedConditions = $this->targetRule->getFailedConditions();
+
             $result[] = array_merge(
                 $this->targetRule->triggerFailureEvent($this->facts),
-                ['interpretation' => $this->targetRule->interpretRules()]
+                [
+                    'interpretation' => $this->targetRule->interpretRules(),
+                    'failedConditions' => $failedConditions
+                ]
             );
         }
 

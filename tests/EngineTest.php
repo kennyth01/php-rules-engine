@@ -30,7 +30,6 @@ class EngineTest extends TestCase
         $engine->setTargetRule('rule.player.isFouledOut');
 
         $result = $engine->evaluate();
-
         $expectedResult = [
             [
                 'type' => 'fouledOut',
@@ -98,7 +97,17 @@ class EngineTest extends TestCase
                         ]
                     ]
                 ],
-                'interpretation' => '(NOT (username is equal to NULL) AND NOT (birthdayYear is equal to NULL) AND NOT (profilePic is equal to NULL) AND NOT (primaryLocation is equal to NULL))'
+                'interpretation' => '(NOT (username is equal to NULL) AND NOT (birthdayYear is equal to NULL) AND NOT (profilePic is equal to NULL) AND NOT (primaryLocation is equal to NULL))',
+                'failedConditions' => [
+                    [
+                        'not' => [
+                            'fact' => 'profile',
+                            'path' => '$.attributes.username',
+                            'value' => NULL,
+                            'operator' => 'equal'
+                        ]
+                    ]
+                ]
             ]
         ];
 
