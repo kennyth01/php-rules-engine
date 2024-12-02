@@ -28,6 +28,7 @@ class EngineTest extends TestCase
         $engine->addFact('gameDuration', 40);
 
         $engine->setTargetRule('rule.player.isFouledOut');
+        $engine->showInterpretation(true);
 
         $result = $engine->evaluate();
         $expectedResult = [
@@ -76,6 +77,8 @@ class EngineTest extends TestCase
         ]);
 
         $engine->setTargetRule('rule.profile.isCompleted');
+        $engine->showInterpretation(true);
+        $engine->showFailedConditions(true);
 
         $result = $engine->evaluate();
 
@@ -181,6 +184,7 @@ class EngineTest extends TestCase
 
         // Step 5: Set the target rule
         $engine->setTargetRule('profile.isSearchable');
+        $engine->showInterpretation(true);
 
         // Step 6: Evaluate the engine
         $result = $engine->evaluate();

@@ -11,6 +11,7 @@ class Rule
     private array $failureEvent;
     private ?string $name;
     private array $failedConditions = [];
+    private array $dependencyRules = [];
 
     public function __construct(array $options)
     {
@@ -25,6 +26,11 @@ class Rule
         if (empty($this->event)) {
             throw new Exception('Invalid rule: event is required');
         }
+    }
+
+    public function getDependencyRules(): array
+    {
+        return $this->dependencyRules;
     }
 
     public function getName(): ?string
@@ -54,6 +60,7 @@ class Rule
                 $dependencyRuleName = $condition['condition'];
                 if (isset($allRules[$dependencyRuleName])) {
                     $dependencyRule = $allRules[$dependencyRuleName];
+                    $this->dependencyRules[] = $dependencyRule;
                     if (!$dependencyRule->evaluate($facts, $allRules)) {
                         $this->failedConditions[] = $condition;
                         return false;
@@ -93,6 +100,7 @@ class Rule
                 $dependencyRuleName = $condition['condition'];
                 if (isset($allRules[$dependencyRuleName])) {
                     $dependencyRule = $allRules[$dependencyRuleName];
+                    $this->dependencyRules[] = $dependencyRule;
                     if ($dependencyRule->evaluate($facts, $allRules)) {
                         return true;
                     } else {

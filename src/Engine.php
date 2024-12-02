@@ -10,6 +10,8 @@ class Engine
     private array $allRules = [];
     private ?Rule $targetRule = null;
     private Facts $facts;
+    private bool $showInterpretation = false;
+    private bool $showFailedConditions = false;
 
     public function __construct()
     {
@@ -61,26 +63,37 @@ class Engine
         }
 
         $result = [];
-        $failedConditions = [];
+        $evaluationResult = $this->targetRule->evaluate($this->facts, $this->allRules);
 
-        // Evaluate the target rule
-        if ($this->targetRule->evaluate($this->facts, $this->allRules)) {
-            $result[] = array_merge(
-                $this->targetRule->triggerEvent($this->facts),
-                ['interpretation' => $this->targetRule->interpretRules()]
-            );
-        } else {
-            $failedConditions = $this->targetRule->getFailedConditions();
+        $extra = $this->getExtraData($evaluationResult);
 
-            $result[] = array_merge(
-                $this->targetRule->triggerFailureEvent($this->facts),
-                [
-                    'interpretation' => $this->targetRule->interpretRules(),
-                    'failedConditions' => $failedConditions
-                ]
-            );
-        }
+        $triggerMethod = $evaluationResult ? 'triggerEvent' : 'triggerFailureEvent';
+        $result[] = array_merge($this->targetRule->$triggerMethod($this->facts), $extra);
 
         return $result;
+    }
+
+    private function getExtraData(bool $evaluationResult): array
+    {
+        $extra = [];
+
+        if ($this->showInterpretation) {
+            $extra['interpretation'] = $this->targetRule->interpretRules();
+        }
+
+        if (!$evaluationResult && $this->showFailedConditions) {
+            $extra['failedConditions'] = $this->targetRule->getFailedConditions();
+        }
+
+        return $extra;
+    }
+
+    public function showInterpretation(bool $showInterpretation): void
+    {
+        $this->showInterpretation = $showInterpretation;
+    }
+    public function showFailedConditions(bool $showFailedConditions): void
+    {
+        $this->showFailedConditions = $showFailedConditions;
     }
 }
