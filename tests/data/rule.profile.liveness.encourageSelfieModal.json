@@ -1,0 +1,274 @@
+{
+    "name": "rule.profile.liveness.encourageSelfieModal",
+    "event": {
+        "type": "Default",
+        "params": {
+            "value": true,
+            "message": "Encourage Selfie Modal shown"
+        }
+    },
+    "conditions": {
+        "any": [
+            {
+                "name": "CongratsModal",
+                "all": [
+                  {
+                    "fact": "profile",
+                    "path": "$.liveness.hasBadge",
+                    "operator": "equal",
+                    "value": true
+                  },
+                  {
+                    "fact": "profile",
+                    "path": "$.liveness.modalAlreadyShown",
+                    "operator": "equal",
+                    "value": false
+                  }
+                ],
+                "event": {
+                    "type": "CongratsModal",
+                    "params": {
+                        "value": true,
+                        "message": "Encourage Selfie Modal shown for CongratsModal"
+                    }
+                }
+            },
+            {
+              "name": "VoluntaryModal - (Within Dismissal Limit): Shows the modal every X hours unless dismissed Y times.",
+              "all": [
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.hasPendingOrApprovedPhotoVerification",
+                  "operator": "equal",
+                  "value": false
+                },
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.isLivenessApproved",
+                  "operator": "equal",
+                  "value": false
+                },
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.timeInHoursSinceLastModal",
+                  "operator": "greaterThanInclusive",
+                  "value": 12
+                },
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.dismissCount",
+                  "operator": "lessThan",
+                  "value": 3
+                }
+              ],
+              "event": {
+                  "type": "VoluntaryModal",
+                  "params": {
+                      "value": true,
+                      "message": "Encourage Selfie Modal shown for VoluntaryModal (Within Dismissal Limit)"
+                  }
+              }
+            },
+            {
+              "name": "VoluntaryModal - (After 7-Day Cooldown): Shows the modal every X hours unless dismissed Y times.",
+              "all": [
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.hasPendingOrApprovedPhotoVerification",
+                  "operator": "equal",
+                  "value": false
+                },
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.isLivenessApproved",
+                  "operator": "equal",
+                  "value": false
+                },
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.timeInHoursSinceLastModal",
+                  "operator": "greaterThanInclusive",
+                  "value": 168
+                },
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.dismissCount",
+                  "operator": "greaterThanInclusive",
+                  "value": 3
+                }
+              ],
+              "event": {
+                  "type": "VoluntaryModal",
+                  "params": {
+                      "value": true,
+                      "message": "Encourage Selfie Modal shown for VoluntaryModal (After 7-Day Cooldown)"
+                  }
+              }
+            },
+            {
+                "name": "VerificationJustGotBetterModal - Non-Badge Logic (Within Dismissal Limit): Shows the modal every X hours unless dismissed Y times.",
+                "all": [
+                  {
+                    "fact": "profile",
+                    "path": "$.liveness.hasPendingOrApprovedPhotoVerification",
+                    "operator": "equal",
+                    "value": true
+                  },
+                  {
+                    "fact": "profile",
+                    "path": "$.liveness.hasBadge",
+                    "operator": "equal",
+                    "value": false
+                  },
+                  {
+                    "fact": "profile",
+                    "path": "$.liveness.isLivenessApproved",
+                    "operator": "equal",
+                    "value": false
+                  },
+                  {
+                    "fact": "profile",
+                    "path": "$.liveness.timeInHoursSinceLastModal",
+                    "operator": "greaterThanInclusive",
+                    "value": 12
+                  },
+                  {
+                    "fact": "profile",
+                    "path": "$.liveness.dismissCount",
+                    "operator": "lessThan",
+                    "value": 3
+                  }
+                ],
+                "event": {
+                    "type": "VerificationJustGotBetterModal",
+                    "params": {
+                        "value": true,
+                        "message": "Encourage Selfie Modal shown for VerificationJustGotBetterModal (Within Dismissal Limit)"
+                    }
+                }
+            },
+            {
+                "name": "VerificationJustGotBetterModal - Non-Badge Logic (After 7-Day Cooldown):  Restarts the modal display loop after a X hours cooldown for those who dismissed the modal Y times.",
+                "all": [
+                  {
+                    "fact": "profile",
+                    "path": "$.liveness.hasPendingOrApprovedPhotoVerification",
+                    "operator": "equal",
+                    "value": true
+                  },
+                  {
+                    "fact": "profile",
+                    "path": "$.liveness.isLivenessApproved",
+                    "operator": "equal",
+                    "value": false
+                  },
+                  {
+                    "fact": "profile",
+                    "path": "$.liveness.hasBadge",
+                    "operator": "equal",
+                    "value": false
+                  },
+                  {
+                    "fact": "profile",
+                    "path": "$.liveness.timeInHoursSinceLastModal",
+                    "operator": "greaterThanInclusive",
+                    "value": 168
+                  },
+                  {
+                    "fact": "profile",
+                    "path": "$.liveness.dismissCount",
+                    "operator": "greaterThanInclusive",
+                    "value": 3
+                  }
+                ],
+                "event": {
+                    "type": "VerificationJustGotBetterModal",
+                    "params": {
+                        "value": true,
+                        "message": "Encourage Selfie Modal shown for VerificationJustGotBetterModal (After 7-Day Cooldown)"
+                    }
+                }
+            },
+            {
+              "name": "AlmostSelfieVerifiedModal (Within Dismissal Limit): Shows the modal every X hours unless dismissed Y times.",
+              "all": [
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.isLivenessApproved",
+                  "operator": "equal",
+                  "value": true
+                },
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.matchCompareFacesAttributeCount",
+                  "operator": "equal",
+                  "value": 0
+                },
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.timeInHoursSinceLastModal",
+                  "operator": "greaterThanInclusive",
+                  "value": 12
+                },
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.dismissCount",
+                  "operator": "lessThan",
+                  "value": 3
+                }
+              ],
+              "event": {
+                  "type": "AlmostSelfieVerifiedModal",
+                  "params": {
+                      "value": true,
+                      "message": "Encourage Selfie Modal shown for AlmostSelfieVerifiedModal (Within Dismissal Limit)"
+                  }
+              }
+            },
+            {
+              "name": "AlmostSelfieVerifiedModal (After 7-Day Cooldown):  Restarts the modal display loop after a X hours cooldown for those who dismissed the modal Y times.",
+              "all": [
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.isLivenessApproved",
+                  "operator": "equal",
+                  "value": true
+                },
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.matchCompareFacesAttributeCount",
+                  "operator": "equal",
+                  "value": 0
+                },
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.timeInHoursSinceLastModal",
+                  "operator": "greaterThanInclusive",
+                  "value": 168
+                },
+                {
+                  "fact": "profile",
+                  "path": "$.liveness.dismissCount",
+                  "operator": "greaterThanInclusive",
+                  "value": 3
+                }
+              ],
+              "event": {
+                  "type": "AlmostSelfieVerifiedModal",
+                  "params": {
+                      "value": true,
+                      "message": "Encourage Selfie Modal shown for AlmostSelfieVerifiedModal (After 7-Day Cooldown)"
+                  }
+              }
+            }
+
+        ]
+    },
+    "failureEvent": {
+        "type": "rule.profile.liveness.encourageSelfieModal",
+        "params": {
+            "value": false,
+            "message": "Encourage Selfie Modal not shown"
+        }
+    }
+}

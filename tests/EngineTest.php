@@ -212,4 +212,265 @@ class EngineTest extends TestCase
         // Step 7: Assert the result matches the expected result
         $this->assertEquals($expectedResult, $result);
     }
+
+    public function testLivenessEncourageSelfieModalCongrats()
+    {
+        $rule = json_decode(file_get_contents('tests/data/rule.profile.liveness.encourageSelfieModal.json'), true);
+
+        // Helper function to setup and evaluate the engine
+        $evaluateEngine = function (array $factData) use ($rule) {
+            $engine = new Engine();
+            $engine->addRule(new Rule($rule));
+            $engine->addFact('profile', $factData);
+            $engine->setTargetRule('rule.profile.liveness.encourageSelfieModal');
+            return $engine->evaluate();
+        };
+
+        // Test case 1
+        $result = $evaluateEngine([
+            'liveness' => [
+                'hasBadge' => true,
+                'modalAlreadyShown' => false,
+                'hasPendingOrApprovedPhotoVerification' => null,
+                'timeInHoursSinceLastModal' => null,
+                'dismissCount' => null,
+                'isLivenessApproved' => null,
+                'matchCompareFacesAttributeCount' => null,
+            ]
+        ]);
+        $this->assertEquals('CongratsModal', $result[0]['type']);
+
+        // Test case 2
+        $result2 = $evaluateEngine([
+            'liveness' => [
+                'hasBadge' => true,
+                'modalAlreadyShown' => true,
+                'hasPendingOrApprovedPhotoVerification' => false,
+                'timeInHoursSinceLastModal' => 24,
+                'dismissCount' => 1,
+                'isLivenessApproved' => true,
+                'matchCompareFacesAttributeCount' => 2,
+            ]
+        ]);
+        $this->assertEquals(false, $result2[0]['params']['value']);
+
+        // Test case 3
+        $result3 = $evaluateEngine([
+            'liveness' => [
+                'hasBadge' => false,
+                'modalAlreadyShown' => false,
+                'hasPendingOrApprovedPhotoVerification' => null,
+                'timeInHoursSinceLastModal' => 24,
+                'dismissCount' => 1,
+                'isLivenessApproved' => null,
+                'matchCompareFacesAttributeCount' => 0,
+            ]
+        ]);
+        $this->assertEquals(false, $result3[0]['params']['value']);
+    }
+
+    public function testLivenessEncourageSelfieModalVoluntary()
+    {
+        $rule = json_decode(file_get_contents('tests/data/rule.profile.liveness.encourageSelfieModal.json'), true);
+
+        // Helper function to setup and evaluate the engine
+        $evaluateEngine = function (array $factData) use ($rule) {
+            $engine = new Engine();
+            $engine->addRule(new Rule($rule));
+            $engine->addFact('profile', $factData);
+            $engine->setTargetRule('rule.profile.liveness.encourageSelfieModal');
+            return $engine->evaluate();
+        };
+
+        // Test case 1
+        $result = $evaluateEngine([
+            'liveness' => [
+                'isLivenessApproved' => false,
+                'hasPendingOrApprovedPhotoVerification' => false,
+                'hasBadge' => false,
+                'modalAlreadyShown' => false,
+                'timeInHoursSinceLastModal' => 24,
+                'dismissCount' => 1,
+                'matchCompareFacesAttributeCount' => 0,
+            ]
+        ]);
+        $this->assertEquals('VoluntaryModal', $result[0]['type']);
+        $this->assertEquals('Encourage Selfie Modal shown for VoluntaryModal (Within Dismissal Limit)', $result[0]['params']['message']);
+
+        // Test case 2
+        $result2 = $evaluateEngine([
+            'liveness' => [
+                'isLivenessApproved' => false,
+                'hasPendingOrApprovedPhotoVerification' => false,
+                'hasBadge' => false,
+                'modalAlreadyShown' => false,
+                'timeInHoursSinceLastModal' => 1,
+                'dismissCount' => 1,
+                'matchCompareFacesAttributeCount' => 0,
+            ]
+        ]);
+        $this->assertEquals(false, $result2[0]['params']['value']);
+
+        // Test case 3
+        $result3 = $evaluateEngine([
+            'liveness' => [
+                'isLivenessApproved' => false,
+                'hasPendingOrApprovedPhotoVerification' => false,
+                'hasBadge' => false,
+                'modalAlreadyShown' => false,
+                'timeInHoursSinceLastModal' => 169,
+                'dismissCount' => 3,
+                'matchCompareFacesAttributeCount' => 0,
+            ]
+        ]);
+        $this->assertEquals('VoluntaryModal', $result3[0]['type']);
+        $this->assertEquals('Encourage Selfie Modal shown for VoluntaryModal (After 7-Day Cooldown)', $result3[0]['params']['message']);
+    }
+
+    public function testLivenessEncourageSelfieModalVerificationJustGotBetter()
+    {
+        $rule = json_decode(file_get_contents('tests/data/rule.profile.liveness.encourageSelfieModal.json'), true);
+
+        // Helper function to setup and evaluate the engine
+        $evaluateEngine = function (array $factData) use ($rule) {
+            $engine = new Engine();
+            $engine->addRule(new Rule($rule));
+            $engine->addFact('profile', $factData);
+            $engine->setTargetRule('rule.profile.liveness.encourageSelfieModal');
+            return $engine->evaluate();
+        };
+
+        // Test case 1
+        $result = $evaluateEngine([
+            'liveness' => [
+                'isLivenessApproved' => false,
+                'hasPendingOrApprovedPhotoVerification' => true,
+                'hasBadge' => false,
+                'modalAlreadyShown' => false,
+                'timeInHoursSinceLastModal' => 24,
+                'dismissCount' => 1,
+                'matchCompareFacesAttributeCount' => 0,
+            ]
+        ]);
+        $this->assertEquals('VerificationJustGotBetterModal', $result[0]['type']);
+        $this->assertEquals('Encourage Selfie Modal shown for VerificationJustGotBetterModal (Within Dismissal Limit)', $result[0]['params']['message']);
+
+        // Test case 2
+        $result2 = $evaluateEngine([
+            'liveness' => [
+                'hasBadge' => false,
+                'hasPendingOrApprovedPhotoVerification' => true,
+                'modalAlreadyShown' => false,
+                'timeInHoursSinceLastModal' => 24,
+                'dismissCount' => 4,
+                'isLivenessApproved' => false,
+                'matchCompareFacesAttributeCount' => 0,
+            ]
+        ]);
+        $this->assertEquals(false, $result2[0]['params']['value']);
+
+        // Test case 3
+        $result3 = $evaluateEngine([
+            'liveness' => [
+                'hasBadge' => false,
+                'hasPendingOrApprovedPhotoVerification' => true,
+                'modalAlreadyShown' => false,
+                'timeInHoursSinceLastModal' => 0,
+                'dismissCount' => 0,
+                'isLivenessApproved' => false,
+                'matchCompareFacesAttributeCount' => 0,
+            ]
+        ]);
+        $this->assertEquals(false, $result3[0]['params']['value']);
+
+        // Test case 4
+        $result4 = $evaluateEngine([
+            'liveness' => [
+                'isLivenessApproved' => false,
+                'hasPendingOrApprovedPhotoVerification' => true,
+                'hasBadge' => false,
+                'modalAlreadyShown' => false,
+                'timeInHoursSinceLastModal' => 13,
+                'dismissCount' => 0,
+                'matchCompareFacesAttributeCount' => 0,
+            ]
+        ]);
+        $this->assertEquals('VerificationJustGotBetterModal', $result4[0]['type']);
+        $this->assertEquals('Encourage Selfie Modal shown for VerificationJustGotBetterModal (Within Dismissal Limit)', $result4[0]['params']['message']);
+
+        // Test case 5
+        $result = $evaluateEngine([
+            'liveness' => [
+                'isLivenessApproved' => false,
+                'hasBadge' => false,
+                'hasPendingOrApprovedPhotoVerification' => true,
+                'modalAlreadyShown' => false,
+                'timeInHoursSinceLastModal' => 168,
+                'dismissCount' => 3,
+                'matchCompareFacesAttributeCount' => 0,
+            ]
+        ]);
+        $this->assertEquals('VerificationJustGotBetterModal', $result[0]['type']);
+        $this->assertEquals('Encourage Selfie Modal shown for VerificationJustGotBetterModal (After 7-Day Cooldown)', $result[0]['params']['message']);
+    }
+
+    public function testLivenessEncourageSelfieModalFailedCompareFaces()
+    {
+        $rule = json_decode(file_get_contents('tests/data/rule.profile.liveness.encourageSelfieModal.json'), true);
+
+        // Helper function to setup and evaluate the engine
+        $evaluateEngine = function (array $factData) use ($rule) {
+            $engine = new Engine();
+            $engine->addRule(new Rule($rule));
+            $engine->addFact('profile', $factData);
+            $engine->setTargetRule('rule.profile.liveness.encourageSelfieModal');
+            return $engine->evaluate();
+        };
+
+        // Test case 1
+        $result = $evaluateEngine([
+            'liveness' => [
+                'isLivenessApproved' => true,
+                'hasBadge' => false,
+                'hasPendingOrApprovedPhotoVerification' => true,
+                'modalAlreadyShown' => false,
+                'timeInHoursSinceLastModal' => 24,
+                'dismissCount' => 1,
+
+                'matchCompareFacesAttributeCount' => 0,
+            ]
+        ]);
+        $this->assertEquals('AlmostSelfieVerifiedModal', $result[0]['type']);
+        $this->assertEquals('Encourage Selfie Modal shown for AlmostSelfieVerifiedModal (Within Dismissal Limit)', $result[0]['params']['message']);
+
+        // Test case 2
+        $result2 = $evaluateEngine([
+            'liveness' => [
+                'isLivenessApproved' => true,
+                'hasBadge' => false,
+                'hasPendingOrApprovedPhotoVerification' => false,
+                'modalAlreadyShown' => false,
+                'timeInHoursSinceLastModal' => 169,
+                'dismissCount' => 4,
+
+                'matchCompareFacesAttributeCount' => 0,
+            ]
+        ]);
+        $this->assertEquals('AlmostSelfieVerifiedModal', $result2[0]['type']);
+        $this->assertEquals('Encourage Selfie Modal shown for AlmostSelfieVerifiedModal (After 7-Day Cooldown)', $result2[0]['params']['message']);
+
+        // Test case 4
+        $result3 = $evaluateEngine([
+            'liveness' => [
+                'hasBadge' => false,
+                'hasPendingOrApprovedPhotoVerification' => false,
+                'modalAlreadyShown' => true,
+                'timeInHoursSinceLastModal' => 169,
+                'dismissCount' => 1,
+                'isLivenessApproved' => true,
+                'matchCompareFacesAttributeCount' => 1,
+            ]
+        ]);
+        $this->assertEquals(false, $result3[0]['params']['value']);
+    }
 }

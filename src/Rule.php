@@ -12,6 +12,7 @@ class Rule
     private ?string $name;
     private array $failedConditions = [];
     private array $dependencyRules = [];
+    private array $conditionSuccessEvents = [];
 
     public function __construct(array $options)
     {
@@ -26,6 +27,11 @@ class Rule
         if (empty($this->event)) {
             throw new Exception('Invalid rule: event is required');
         }
+    }
+
+    public function getConditionSuccessEvents(): array
+    {
+        return $this->conditionSuccessEvents;
     }
 
     public function getDependencyRules(): array
@@ -90,6 +96,9 @@ class Rule
                 }
             }
         }
+        if (isset($condition['event'])) {
+            $this->conditionSuccessEvents = $condition['event'];
+        }
         return true;
     }
 
@@ -102,6 +111,9 @@ class Rule
                     $dependencyRule = $allRules[$dependencyRuleName];
                     $this->dependencyRules[] = $dependencyRule;
                     if ($dependencyRule->evaluate($facts, $allRules)) {
+                        if (isset($condition['event'])) {
+                            $this->conditionSuccessEvents = $condition['event'];
+                        }
                         return true;
                     } else {
                         $this->failedConditions[] = $condition;
@@ -111,24 +123,36 @@ class Rule
                 }
             } elseif (isset($condition['all'])) {
                 if ($this->evaluateAll($condition['all'], $facts, $allRules)) {
+                    if (isset($condition['event'])) {
+                        $this->conditionSuccessEvents = $condition['event'];
+                    }
                     return true;
                 } else {
                     $this->failedConditions[] = $condition;
                 }
             } elseif (isset($condition['any'])) {
                 if ($this->evaluateAny($condition['any'], $facts, $allRules)) {
+                    if (isset($condition['event'])) {
+                        $this->conditionSuccessEvents = $condition['event'];
+                    }
                     return true;
                 } else {
                     $this->failedConditions[] = $condition;
                 }
             } elseif (isset($condition['not'])) {
                 if (!$this->evaluateCondition($condition['not'], $facts, $allRules)) {
+                    if (isset($condition['event'])) {
+                        $this->conditionSuccessEvents = $condition['event'];
+                    }
                     return true; // Negate the condition
                 } else {
                     $this->failedConditions[] = $condition;
                 }
             } else {
                 if ($this->evaluateCondition($condition, $facts, $allRules)) {
+                    if (isset($condition['event'])) {
+                        $this->conditionSuccessEvents = $condition['event'];
+                    }
                     return true;
                 } else {
                     $this->failedConditions[] = $condition;
@@ -171,6 +195,10 @@ class Rule
 
     public function triggerEvent(Facts $facts): array
     {
+        if (!empty($this->conditionSuccessEvents)) {
+            return $this->conditionSuccessEvents;
+        }
+
         return [
             'type' => $this->event['type'],
             'params' => $this->event['params'],
