@@ -267,6 +267,10 @@ class Rule
             default                => throw new Exception("Unknown operator: $operator"),
         };
 
+        if (is_array($value)) {
+            $value = json_encode($value);
+        }
+
         return "$factDisplay $operatorText $value";
     }
 }
