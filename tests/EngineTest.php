@@ -215,7 +215,8 @@ class EngineTest extends TestCase
 
     public function testLivenessEncourageSelfieModalCongrats()
     {
-        $rule = json_decode(file_get_contents('tests/data/rule.profile.liveness.encourageSelfieModal.json'), true);
+        //$rule = json_decode(file_get_contents('tests/data/rule.profile.liveness.encourageSelfieModal.json'), true);
+        $rule = json_decode(file_get_contents('tests/data/rule.profile.liveness.encourageSelfieModal-decisions.json'), true);
 
         // Helper function to setup and evaluate the engine
         $evaluateEngine = function (array $factData) use ($rule) {

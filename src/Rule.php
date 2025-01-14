@@ -7,6 +7,7 @@ use Exception;
 class Rule
 {
     private array $conditions;
+    private array $decisions;
     private array $event;
     private array $failureEvent;
     private ?string $name;
@@ -17,11 +18,12 @@ class Rule
     public function __construct(array $options)
     {
         $this->conditions = $options['conditions'] ?? [];
+        $this->decisions = $options['decisions'] ?? [];
         $this->event = $options['event'] ?? [];
         $this->failureEvent = $options['failureEvent'] ?? [];
         $this->name = $options['name'] ?? null;
 
-        if (empty($this->conditions)) {
+        if (empty($this->conditions) && empty($this->decisions)) {
             throw new Exception('Invalid rule: conditions are required');
         }
         if (empty($this->event)) {
@@ -44,9 +46,35 @@ class Rule
         return $this->name;
     }
 
+    private function transformDecisionsToConditionWithAny(array $decisions): array
+    {
+        $newDecisions = array_map(function ($decision) {
+            $newDecision = [
+                'name' => $decision['name'],
+                'event' => $decision['event'],
+            ];
+
+            foreach (['all', 'any', 'not'] as $conditionType) {
+                if (isset($decision['conditions'][$conditionType])) {
+                    $newDecision[$conditionType] = $decision['conditions'][$conditionType];
+                    break;
+                }
+            }
+
+            return $newDecision;
+        }, $decisions);
+
+        return ['any' => $newDecisions];
+    }
+
     public function evaluate(Facts $facts, array $allRules): bool
     {
         $this->failedConditions = []; // Reset failed conditions before evaluation
+
+        // if there's a 'decision' key, convert it to conditions with 'any' key
+        if (!empty($this->decisions)) {
+            $this->conditions = $this->transformDecisionsToConditionWithAny($this->decisions);
+        }
 
         if (isset($this->conditions['all'])) {
             return $this->evaluateAll($this->conditions['all'], $facts, $allRules);
