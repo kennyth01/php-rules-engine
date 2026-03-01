@@ -474,4 +474,90 @@ class EngineTest extends TestCase
         ]);
         $this->assertEquals(false, $result3[0]['params']['value']);
     }
+
+    /**
+     * Test fact-to-fact comparison
+     * This test demonstrates comparing two dynamic facts at runtime
+     * instead of comparing a fact to a static value
+     *
+     * @return void
+     */
+    public function testFactToFactComparison()
+    {
+        $engine = new Engine();
+
+        // Test case 1: distance is less than or equal to limit (should pass)
+        $ruleConfig = [
+            "name" => "test.factToFact",
+            "conditions" => [
+                "all" => [
+                    [
+                        "fact" => "distance",
+                        "operator" => "lessThanInclusive",
+                        "value" => ["fact" => "limit"]
+                    ]
+                ]
+            ],
+            "event" => ["type" => "passed", "params" => ["message" => "Distance is within limit"]],
+            "failureEvent" => ["type" => "failed", "params" => ["message" => "Distance exceeds limit"]]
+        ];
+
+        $engine->addRule(new Rule($ruleConfig));
+        $engine->setTargetRule('test.factToFact');
+        $engine->showInterpretation(true);
+
+        $engine->addFact('distance', 40);
+        $engine->addFact('limit', 50);
+        $results1 = $engine->evaluate();
+
+        $this->assertEquals('passed', $results1[0]['type']);
+        $this->assertEquals('Distance is within limit', $results1[0]['params']['message']);
+        $this->assertEquals('(distance is <= limit)', $results1[0]['interpretation']);
+
+        // Test case 2: distance exceeds limit (should fail)
+        $engine2 = new Engine();
+        $engine2->addRule(new Rule($ruleConfig));
+        $engine2->setTargetRule('test.factToFact');
+        $engine2->showInterpretation(true);
+
+        $engine2->addFact('distance', 60);
+        $engine2->addFact('limit', 50);
+        $results2 = $engine2->evaluate();
+
+        $this->assertEquals('failed', $results2[0]['type']);
+        $this->assertEquals('Distance exceeds limit', $results2[0]['params']['message']);
+
+        // Test case 3: comparing nested facts with paths
+        $ruleConfig3 = [
+            "name" => "test.factToFactNested",
+            "conditions" => [
+                "all" => [
+                    [
+                        "fact" => "user",
+                        "path" => "$.age",
+                        "operator" => "greaterThanInclusive",
+                        "value" => [
+                            "fact" => "requirements",
+                            "path" => "$.minimumAge"
+                        ]
+                    ]
+                ]
+            ],
+            "event" => ["type" => "ageVerified", "params" => ["message" => "User meets age requirement"]],
+            "failureEvent" => ["type" => "ageFailed", "params" => ["message" => "User does not meet age requirement"]]
+        ];
+
+        $engine3 = new Engine();
+        $engine3->addRule(new Rule($ruleConfig3));
+        $engine3->setTargetRule('test.factToFactNested');
+        $engine3->showInterpretation(true);
+
+        $engine3->addFact('user', ['age' => 25]);
+        $engine3->addFact('requirements', ['minimumAge' => 18]);
+        $results3 = $engine3->evaluate();
+
+        $this->assertEquals('ageVerified', $results3[0]['type']);
+        $this->assertEquals('User meets age requirement', $results3[0]['params']['message']);
+        $this->assertEquals('(age is >= minimumAge)', $results3[0]['interpretation']);
+    }
 }

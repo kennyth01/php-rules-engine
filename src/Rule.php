@@ -208,6 +208,11 @@ class Rule
 
         $factData = $facts->get($factName, $path);
 
+        // Resolve value if it's another fact (fact-to-fact comparison)
+        if (is_array($value) && isset($value['fact'])) {
+            $value = $facts->get($value['fact'], $value['path'] ?? null);
+        }
+
         return match ($operator) {
             'equal'                => $factData === $value,
             'lessThanInclusive'    => $factData <= $value,
@@ -294,6 +299,18 @@ class Rule
             'contains'             => 'contains',
             default                => throw new Exception("Unknown operator: $operator"),
         };
+
+        // Handle fact-to-fact comparison display
+        if (is_array($value) && isset($value['fact'])) {
+            $valueFact = $value['fact'];
+            $valuePath = $value['path'] ?? null;
+            $valueDisplay = $valueFact;
+            if ($valuePath) {
+                $valuePathParts = explode('.', ltrim($valuePath, '$.'));
+                $valueDisplay = end($valuePathParts);
+            }
+            return "$factDisplay $operatorText $valueDisplay";
+        }
 
         if (is_array($value)) {
             $value = json_encode($value);
