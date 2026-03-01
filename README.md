@@ -8,6 +8,7 @@ This library, inspired by the `json-rules-engine`, ([link](https://github.com/Ca
 
 ## Features
 - **JSON-Configurable Rules**: Easily define rules and conditions in JSON format.
+- **Fact-to-Fact Comparison**: Compare two dynamic facts at runtime instead of comparing to static values.
 - **Rule Dependencies**: Reference other rules as conditions to create complex evaluations.
 - **Logical Operators**: Supports `all` (AND), `any` (OR), and `not` operators, allowing for nested conditions.
 - **Custom Events and Failure Messages**: Attach custom messages for success or failure, making evaluations easy to interpret.
@@ -113,6 +114,64 @@ print_r($result);
 ```
 ## Advanced Examples
 For other examples, refer to the `tests` directory
+
+### Fact-to-Fact Comparison
+The engine supports comparing two facts dynamically at runtime. This allows for flexible rule evaluation where comparison values can change based on context.
+
+**Example: Speed Limit Check**
+```php
+$engine = new Engine();
+
+$ruleConfig = [
+    "name" => "speed.check",
+    "conditions" => [
+        "all" => [
+            [
+                "fact" => "currentSpeed",
+                "operator" => "lessThanInclusive",
+                "value" => ["fact" => "speedLimit"]  // Compare to another fact
+            ]
+        ]
+    ],
+    "event" => ["type" => "withinLimit", "params" => ["message" => "Speed is within limit"]],
+    "failureEvent" => ["type" => "speeding", "params" => ["message" => "Exceeding speed limit"]]
+];
+
+$engine->addRule(new Rule($ruleConfig));
+$engine->setTargetRule('speed.check');
+
+// Add both facts dynamically
+$engine->addFact('currentSpeed', 55);
+$engine->addFact('speedLimit', 60);
+
+$result = $engine->evaluate();
+// Result: withinLimit - Speed is within limit
+```
+
+**Example: Nested Fact Comparison**
+```php
+$ruleConfig = [
+    "name" => "age.verification",
+    "conditions" => [
+        "all" => [
+            [
+                "fact" => "user",
+                "path" => "$.age",
+                "operator" => "greaterThanInclusive",
+                "value" => [
+                    "fact" => "requirements",
+                    "path" => "$.minimumAge"
+                ]
+            ]
+        ]
+    ],
+    "event" => ["type" => "ageVerified", "params" => []],
+    "failureEvent" => ["type" => "ageFailed", "params" => []]
+];
+
+$engine->addFact('user', ['age' => 25]);
+$engine->addFact('requirements', ['minimumAge' => 18]);
+```
 
 ## Run the test
 ```bash
