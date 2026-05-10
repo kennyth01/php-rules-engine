@@ -248,7 +248,7 @@ class Rule
         ];
     }
 
-    public function interpretRules(array $conditions = null): string
+    public function interpretRules(?array $conditions = null): string
     {
         if ($conditions === null) {
             $conditions = $this->conditions;
